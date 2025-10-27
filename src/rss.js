@@ -1,4 +1,4 @@
-const { loadHistory, xmlEscape, httpDate, computeETagFromHistory } = require("./history");
+const { loadHistory, xmlEscape, httpDate } = require("./history");
 const { SPOTIFY_BASE_URL } = require("./util/constants");
 
 function buildRssXml({ siteTitle, siteLink, siteDesc, items, lastDate }) {
@@ -30,26 +30,9 @@ function buildRssXml({ siteTitle, siteLink, siteDesc, items, lastDate }) {
 </channel></rss>`;
 }
 
-function sendRss(res, req) {
-    res.setHeader("Vary", "If-None-Match, If-Modified-Since");
-
+function sendRss(res, _req) {
     const hist = [...loadHistory()].sort((a, b) => new Date(b?.fetched_at || 0) - new Date(a?.fetched_at || 0));
     const lastDate = hist[0]?.fetched_at || new Date(0).toISOString();
-    const etag = `W/"${computeETagFromHistory(hist)}"`;
-
-    const inm = req?.headers?.["if-none-match"];
-    if (inm && etagListContains(inm, etag)) {
-        res.setHeader("ETag", etag);
-        res.setHeader("Last-Modified", httpDate(lastDate));
-        return res.sendStatus(304);
-    }
-
-    const ims = req?.headers ? req.headers["if-modified-since"] : undefined;
-    if (ims && new Date(lastDate) <= new Date(ims)) {
-        res.setHeader("ETag", etag);
-        res.setHeader("Last-Modified", httpDate(lastDate));
-        return res.sendStatus(304);
-    }
     const last = hist[0];
 
     const siteTitle = process.env.FEED_TITLE || "Daylist Tracker";
@@ -66,19 +49,8 @@ function sendRss(res, req) {
 
     res.setHeader("Content-Type", "application/rss+xml; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=60");
-    res.setHeader("ETag", etag);
     res.setHeader("Last-Modified", httpDate(lastDate));
     return res.status(200).send(rss);
-}
-
-function etagListContains(header, tag) {
-    if (!header) return false;
-    const h = header.trim();
-    if (h === "*") return true;
-
-    const strip = s => s.trim().replace(/^W\/"?|^"?|"?$/g, "");
-    const want = strip(tag);
-    return h.split(",").some(t => strip(t) === want);
 }
 
 module.exports = { sendRss };

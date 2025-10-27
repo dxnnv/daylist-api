@@ -40,13 +40,9 @@ function xmlEscape(s = "") {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&apos;");
 }
+
 function httpDate(d) {
     return new Date(d).toUTCString();
 }
-function computeETagFromHistory(hist) {
-    const hash = crypto.createHash("sha1");
-    for (const it of hist) hash.update(`${it.id}|${it.name}|${it.fetched_at}\n`);
-    return `W/"${hash.digest("hex")}"`;
-}
 
-module.exports = { loadHistory, saveHistory, recordIfChanged, xmlEscape, httpDate, computeETagFromHistory };
+module.exports = { loadHistory, saveHistory, recordIfChanged, xmlEscape, httpDate };
