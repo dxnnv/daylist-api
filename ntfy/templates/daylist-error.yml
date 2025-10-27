@@ -1,0 +1,6 @@
+title: "❌ Daylist tracker error"
+message: |-
+    {{- if .error -}}{{ .error }}{{- else -}}Unknown error{{- end -}}
+    {{- if .hint }} (hint: {{ .hint }}){{ end -}}
+    {{- if .route }} — route: {{ .route }}{{ end -}}
+    {{- if .when }} — at {{ .when }}{{ end -}}

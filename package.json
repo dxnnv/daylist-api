@@ -1,0 +1,31 @@
+{
+    "name": "daylist-api",
+    "version": "1.0.0",
+    "description": "Keep track of your Spotify Daylists via endpoints, RSS, and ntfy.sh",
+    "keywords": [
+        "spotify",
+        "express",
+        "node",
+        "ntfy",
+        "rss"
+    ],
+    "homepage": "https://github.com/dxnnv/daylist-api#readme",
+    "bugs": {
+        "url": "https://github.com/dxnnv/daylist-api/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dxnnv/daylist-api.git"
+    },
+    "license": "MIT",
+    "author": "dxnnv",
+    "type": "commonjs",
+    "main": "./src/server.js",
+    "scripts": {
+        "start": "node --env-file=.env ./src/server.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "express": "^5.1.0"
+    }
+}

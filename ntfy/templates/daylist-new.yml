@@ -1,0 +1,6 @@
+title: "🎧 New Daylist: {{ .name }}"
+message: |-
+    {{- if .old_name }}was “{{ .old_name }}”. {{ end -}}
+    id: {{ .id }}
+    {{- if .link }} — {{ .link }}{{ end -}}
+    {{- if .fetched_at }} — {{ .fetched_at }}{{ end -}}
