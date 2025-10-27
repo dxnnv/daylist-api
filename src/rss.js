@@ -35,9 +35,10 @@ function sendRss(res, req) {
 
     const hist = [...loadHistory()].sort((a, b) => new Date(b?.fetched_at || 0) - new Date(a?.fetched_at || 0));
     const lastDate = hist[0]?.fetched_at || new Date(0).toISOString();
-    const etag = computeETagFromHistory(hist);
+    const etag = `W/"${computeETagFromHistory(hist)}"`;
 
-    if (req?.headers && req.headers["if-none-match"] === etag) {
+    const inm = req?.headers?.["if-none-match"];
+    if (inm && etagListContains(inm, etag)) {
         res.setHeader("ETag", etag);
         res.setHeader("Last-Modified", httpDate(lastDate));
         return res.sendStatus(304);
@@ -68,6 +69,16 @@ function sendRss(res, req) {
     res.setHeader("ETag", etag);
     res.setHeader("Last-Modified", httpDate(lastDate));
     return res.status(200).send(rss);
+}
+
+function etagListContains(header, tag) {
+    if (!header) return false;
+    const h = header.trim();
+    if (h === "*") return true;
+
+    const strip = s => s.trim().replace(/^W\/"?|^"?|"?$/g, "");
+    const want = strip(tag);
+    return h.split(",").some(t => strip(t) === want);
 }
 
 module.exports = { sendRss };

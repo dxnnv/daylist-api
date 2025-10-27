@@ -9,6 +9,7 @@ const { sendRss } = require("./rss");
 const { notifyError, notifyNewDaylist } = require("./ntfy");
 
 const app = express();
+app.set("etag", false);
 
 app.get("/", async (_req, res) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
