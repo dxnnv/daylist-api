@@ -1,4 +1,5 @@
 const { SPOTIFY_BASE_URL } = require("./constants");
+const { fetchText, headersBase, withRetries, UA_MOBILE } = require("./http");
 
 function extractMeta(content, propOrName) {
     const re = new RegExp(`<meta[^>]+(?:property|name)=["']${propOrName}["'][^>]+content=["']([^"']+)["']`, "i");
@@ -38,38 +39,47 @@ function extractGenresFromDescription(html) {
     const tail = segment.replace(/<a[^>]*>[^<]+<\/a>/gi, "");
     const tailGenres = tail
         .split(/[,，]/g)
-        .map(s => s.replace(/[\s–-]+$/g, "").trim())
+        .map(s =>
+            s
+                .replace(/(^\s+|\s+$)/g, "")
+                .replace(/[–—-]+$/g, "")
+                .trim()
+        )
         .filter(Boolean);
 
     const seen = new Set();
     return [...anchorGenres, ...tailGenres].filter(g => !seen.has(g.toLowerCase()) && seen.add(g.toLowerCase()));
 }
 
-async function extractPlaylistExtras(playlistId, cookieOpt) {
+async function extractPlaylistExtras(playlistId, cookie) {
     const url = `${SPOTIFY_BASE_URL}/playlist/${playlistId}`;
-    const headers = {
-        "User-Agent": "Mozilla/5.0",
-        Accept: "text/html",
-        "Accept-Language": "en",
-    };
-    if (cookieOpt) headers.Cookie = cookieOpt;
+    const headerSets = [headersBase({ cookie }), headersBase({ cookie, ua: UA_MOBILE })];
 
-    const r = await fetch(url, { headers, redirect: "follow" });
-    const html = await r.text();
+    for (const headers of headerSets) {
+        const { text } = await withRetries(() => fetchText(url, headers));
+        const image = extractMeta(text, "og:image") || extractMeta(text, "twitter:image") || null;
 
-    const image = extractMeta(html, "og:image") || extractMeta(html, "twitter:image") || null;
+        const genres = extractGenresFromDescription(text);
 
-    const genres = extractGenresFromDescription(html);
-    return { image, genres };
+        if (image || (genres && genres.length)) return { image, genres };
+    }
+    return { image: null, genres: [] };
 }
 
-function stripSpotifySuffix(t) {
-    return (t || "").replace(/\s*\|\s*Spotify(?:\s*Playlist|\s*Album|\s*Song|\s*Artist)?\s*$/i, "");
-}
+const stripSpotifySuffix = (t = "") => t.replace(/\s*\|\s*Spotify(?:\s*Playlist|\s*Album|\s*Song|\s*Artist)?\s*$/i, "");
+
+const normalizeTitle = (t = "") => String(t).normalize("NFKC").trim().replace(/[–—−]/g, "-");
 
 function isGenericTitle(t = "") {
-    const s = t.trim();
-    return s == /(day|play)list/i || s == /spotify (–|-) web player/i;
+    const s = normalizeTitle(t).toLowerCase();
+    return s === "daylist" || s === "playlist" || s === "spotify - web player";
 }
 
-module.exports = { extractMeta, extractNextName, extractPlaylistExtras, stripSpotifySuffix, isGenericTitle };
+module.exports = {
+    extractMeta,
+    extractNextName,
+    extractPlaylistExtras,
+    stripSpotifySuffix,
+    normalizeTitle,
+    isGenericTitle,
+};

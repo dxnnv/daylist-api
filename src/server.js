@@ -18,7 +18,7 @@ app.get("/", async (_req, res) => {
         const latestId = await resolveCurrentDaylistIdViaPortal();
         const cookie = getCookie();
         const cur = await resolveDaylistTitle(latestId, cookie || undefined);
-        const extras = await extractPlaylistExtras(cur.id, cookie);
+        const extras = await extractPlaylistExtras(cur.id, cookie || undefined);
 
         const prev = loadHistory()[0] || null;
         const entry = {
