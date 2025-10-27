@@ -1,6 +1,5 @@
 const { loadHistory, xmlEscape, httpDate, computeETagFromHistory } = require("./history");
 const { SPOTIFY_BASE_URL } = require("./util/constants");
-const { extractPlaylistExtras } = require("./util/parse");
 
 function buildRssXml({ siteTitle, siteLink, siteDesc, items, lastDate }) {
     const itemsXml = items
@@ -32,17 +31,25 @@ function buildRssXml({ siteTitle, siteLink, siteDesc, items, lastDate }) {
 }
 
 function sendRss(res, req) {
-    const hist = loadHistory();
-    const last = hist[0];
-    const lastDate = last?.fetched_at || new Date().toISOString();
+    res.setHeader("Vary", "If-None-Match, If-Modified-Since");
+
+    const hist = [...loadHistory()].sort((a, b) => new Date(b?.fetched_at || 0) - new Date(a?.fetched_at || 0));
+    const lastDate = hist[0]?.fetched_at || new Date(0).toISOString();
     const etag = computeETagFromHistory(hist);
 
-    if (
-        req.headers["if-none-match"] === etag ||
-        (req.headers["if-modified-since"] &&
-            new Date(req.headers["if-modified-since"]).getTime() >= new Date(lastDate).getTime())
-    )
-        return res.status(304).end();
+    if (req?.headers && req.headers["if-none-match"] === etag) {
+        res.setHeader("ETag", etag);
+        res.setHeader("Last-Modified", httpDate(lastDate));
+        return res.sendStatus(304);
+    }
+
+    const ims = req?.headers ? req.headers["if-modified-since"] : undefined;
+    if (ims && new Date(lastDate) <= new Date(ims)) {
+        res.setHeader("ETag", etag);
+        res.setHeader("Last-Modified", httpDate(lastDate));
+        return res.sendStatus(304);
+    }
+    const last = hist[0];
 
     const siteTitle = process.env.FEED_TITLE || "Daylist Tracker";
     const siteLink = last?.link || SPOTIFY_BASE_URL;

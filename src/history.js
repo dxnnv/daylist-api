@@ -14,8 +14,12 @@ function loadHistory() {
 }
 function saveHistory(arr) {
     try {
+        fs.mkdirSync(path.dirname(DAYLIST_HISTORY_FILE), { recursive: true });
         fs.writeFileSync(DAYLIST_HISTORY_FILE, JSON.stringify(arr, null, 2));
-    } catch {}
+    } catch (e) {
+        console.error("[history:save] failed:", e && (e.stack || e));
+        throw e;
+    }
 }
 function recordIfChanged(entry, maxItems = 200) {
     const hist = loadHistory();
