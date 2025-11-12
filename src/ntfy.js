@@ -30,7 +30,7 @@ async function sendTemplate(topic, templateName, payload, extras = {}) {
             body: JSON.stringify(payload),
         });
     } catch (err) {
-    	console.error("Failed to send ntfy template", err);
+    	    console.error("Failed to send ntfy template", err);
     }
 }
 

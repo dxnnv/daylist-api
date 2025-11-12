@@ -1,4 +1,4 @@
-title: "❌ Daylist tracker error"
+title: "Daylist tracker error"
 message: |-
     {{- if .error -}}{{ .error }}{{- else -}}Unknown error{{- end -}}
     {{- if .hint }} (hint: {{ .hint }}){{ end -}}

@@ -1,4 +1,4 @@
-title: "🎧 New Daylist: {{ .name }}"
+title: "New Daylist: {{ .name }}"
 message: |-
     {{- if .old_name }}was “{{ .old_name }}”. {{ end -}}
     id: {{ .id }}
