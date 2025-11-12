@@ -78,9 +78,10 @@ app.get("/status", async (_req, res) => {
 
 app.get("/daylist.rss", (req, res) => sendRss(res, req));
 
-const srv = app.listen(Number(PORT), () => {
+const srv = app.listen(Number(PORT), "127.0.0.1", () => {
     console.log(`daylist-api listening on :${PORT}`);
 });
+
 srv.on("error", e => {
     console.error("[listen:error]", e && (e.stack || e));
     process.exit(1);

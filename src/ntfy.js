@@ -13,8 +13,11 @@ function shouldSend(key, minMs) {
 }
 
 async function sendTemplate(topic, templateName, payload, extras = {}) {
+	if (!NTFY || !NTFY.base) return;
+	
     try {
         const url = new URL(NTFY.base);
+        url.pathname = "/daylist";
         url.searchParams.set("template", templateName);
 
         const headers = { "Content-Type": "application/json", ...authHeader() };
@@ -24,9 +27,11 @@ async function sendTemplate(topic, templateName, payload, extras = {}) {
         await fetch(url.toString(), {
             method: "POST",
             headers,
-            body: JSON.stringify({ topic, ...payload }),
+            body: JSON.stringify(payload),
         });
-    } catch {}
+    } catch (err) {
+    	console.error("Failed to send ntfy template", err);
+    }
 }
 
 async function notifyError(fields, { debounceMs = 30 * 60 * 1000 } = {}) {
